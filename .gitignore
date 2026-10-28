@@ -1,0 +1,19 @@
+# Python
+__pycache__/
+*.py[cod]
+venv/
+.venv/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# Node.js and generated frontend build
+frontend/node_modules/
+frontend/dist/
+
+# Local environment and editor/OS files
+.env
+.env.*
+!.env.example
+.DS_Store
+Thumbs.db

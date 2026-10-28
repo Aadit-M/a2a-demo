@@ -1,0 +1,393 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="An illustrative guide to using LangGraph, MCP, and A2A at different layers of a KYC agent architecture.">
+    <title>Architecture Guide | KYC Workflow Lab</title>
+    <style>
+      :root {
+        color-scheme: light;
+        font-family: "DM Sans", "Segoe UI", sans-serif;
+        color: #172a26;
+        background: #f5f7f5;
+        font-synthesis: none;
+        text-rendering: optimizeLegibility;
+        -webkit-font-smoothing: antialiased;
+        --ink: #172a26;
+        --green: #147d63;
+        --line: #e4eae6;
+      }
+
+      * { box-sizing: border-box; }
+      body { min-width: 320px; margin: 0; }
+      .app-shell { min-height: 100vh; }
+      .topbar {
+        min-height: 72px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 0 max(36px, calc((100vw - 1200px) / 2));
+        background: rgba(255,255,255,.92);
+        border-bottom: 1px solid var(--line);
+      }
+      .brand {
+        display: flex;
+        align-items: center;
+        gap: 11px;
+        color: var(--ink);
+        text-decoration: none;
+        font-size: 11px;
+        font-weight: 700;
+        letter-spacing: .12em;
+      }
+      .brand-mark {
+        display: grid;
+        place-items: center;
+        width: 31px;
+        height: 31px;
+        border-radius: 9px;
+        color: #fff;
+        background: var(--green);
+        font-size: 17px;
+        font-weight: 800;
+        letter-spacing: 0;
+      }
+      .top-nav {
+        display: flex;
+        align-items: center;
+        gap: 5px;
+        margin: 0 auto;
+        padding: 4px;
+        border: 1px solid #e8ede9;
+        border-radius: 9px;
+        background: #f7f9f7;
+      }
+      .top-nav-link {
+        padding: 8px 13px;
+        border-radius: 6px;
+        color: #1b654e;
+        background: #fff;
+        box-shadow: 0 1px 4px rgba(34,63,49,.11);
+        font-size: 11px;
+        font-weight: 600;
+      }
+      .topbar-label {
+        color: #76847f;
+        font-size: 10px;
+        font-weight: 700;
+        letter-spacing: .11em;
+      }
+      .page-content { max-width: 1200px; margin: 0 auto; padding: 0 32px; }
+      .eyebrow {
+        color: var(--green);
+        font-size: 10px;
+        line-height: 1.4;
+        font-weight: 700;
+        letter-spacing: .14em;
+      }
+      .eyebrow-line {
+        display: inline-block;
+        width: 23px;
+        height: 1px;
+        margin: 0 8px 3px 0;
+        vertical-align: middle;
+        background: #55a68c;
+      }
+      .guide-hero { padding: 60px 0 25px; }
+      .guide-hero h1 {
+        margin: 17px 0 12px;
+        font-size: clamp(38px, 5vw, 54px);
+        line-height: 1.08;
+        font-weight: 800;
+        letter-spacing: -.055em;
+      }
+      .guide-hero h1 span { color: var(--green); }
+      .guide-hero > p {
+        max-width: 680px;
+        margin: 0;
+        color: #64746e;
+        font-size: 14px;
+        line-height: 1.75;
+      }
+      .primer { padding: 20px 0 0; }
+      .primer-heading {
+        display: flex;
+        justify-content: space-between;
+        align-items: end;
+        gap: 30px;
+        margin-bottom: 18px;
+      }
+      .primer-heading h2,.stack-guide-heading h2 {
+        margin: 6px 0 0;
+        font-size: 22px;
+        font-weight: 700;
+        letter-spacing: -.04em;
+      }
+      .primer-heading > p {
+        max-width: 390px;
+        margin: 0;
+        color: #738079;
+        font-size: 11px;
+        line-height: 1.6;
+      }
+      .benefit-grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 14px;
+        align-items: stretch;
+      }
+      .benefit-card {
+        display: flex;
+        flex-direction: column;
+        padding: 18px;
+        border: 1px solid #e3e9e5;
+        border-radius: 11px;
+        background: #fff;
+      }
+      .benefit-top { display: flex; justify-content: space-between; align-items: center; }
+      .benefit-number { color: #91a098; font-size: 12px; font-weight: 700; }
+      .benefit-tag {
+        padding: 5px 7px;
+        border-radius: 5px;
+        color: #3d7963;
+        background: #edf6f0;
+        font-size: 7px;
+        font-weight: 700;
+        letter-spacing: .09em;
+      }
+      .benefit-card h3 { margin: 15px 0 8px; font-size: 15px; font-weight: 700; letter-spacing: -.025em; }
+      .benefit-card > p { margin: 0 0 14px; color: #697970; font-size: 10px; line-height: 1.65; }
+      .benefit-example,.benefit-caveat { margin-top: auto; padding: 10px; border-radius: 6px; background: #f2f8f4; }
+      .benefit-example > span,.benefit-caveat > span {
+        color: #52836b;
+        font-size: 7px;
+        font-weight: 700;
+        letter-spacing: .09em;
+      }
+      .benefit-example p,.benefit-caveat p { margin: 4px 0 0; color: #5e7066; font-size: 9px; line-height: 1.55; }
+      .benefit-caveat { margin-top: 8px; background: #f5f6f4; }
+      .benefit-caveat > span { color: #818d86; }
+      .benefit-caveat p { color: #748078; }
+      .stack-guide { margin-top: 17px; padding: 21px 22px 15px; border: 1px solid #e3e9e5; border-radius: 11px; background: #fff; }
+      .stack-guide-heading { margin-bottom: 17px; }
+      .stack-guide-heading h2 { font-size: 18px; }
+      .stack-guide-heading > p { margin: 5px 0 0; color: #7d8982; font-size: 10px; }
+      .stack-flow { display: grid; grid-template-columns: 1fr 30px 1fr 30px 1fr; align-items: center; gap: 10px; }
+      .stack-item {
+        display: flex;
+        min-height: 100px;
+        gap: 12px;
+        align-items: flex-start;
+        padding: 14px;
+        border: 1px solid #e8ede9;
+        border-radius: 8px;
+        background: #fbfcfb;
+      }
+      .stack-icon {
+        display: grid;
+        place-items: center;
+        flex: 0 0 31px;
+        height: 31px;
+        border-radius: 8px;
+        color: #fff;
+        font-size: 10px;
+        font-weight: 700;
+      }
+      .stack-brain { background: #587b6d; }
+      .stack-hands { background: #738b7c; }
+      .stack-phone { background: var(--green); }
+      .stack-role { color: #829087; font-size: 7px; font-weight: 700; letter-spacing: .1em; }
+      .stack-item h3 { margin: 3px 0 5px; font-size: 12px; font-weight: 700; }
+      .stack-item p { margin: 0; color: #76847c; font-size: 9px; line-height: 1.55; }
+      .stack-item strong { color: #4f685b; font-weight: 600; }
+      .stack-arrow { color: #8ca699; text-align: center; font-size: 18px; }
+      .stack-caption {
+        display: grid;
+        grid-template-columns: 1fr 30px 1fr 30px 1fr;
+        gap: 10px;
+        margin-top: 9px;
+        color: #9aa59f;
+        font-size: 7px;
+        text-align: center;
+        letter-spacing: .09em;
+      }
+      .stack-caption span:nth-child(1) { grid-column: 1; }
+      .stack-caption span:nth-child(2) { grid-column: 3; }
+      .stack-caption span:nth-child(3) { grid-column: 5; }
+      .demo-limit { margin-top: 15px; padding-top: 11px; border-top: 1px solid #edf0ee; color: #78857e; font-size: 9px; line-height: 1.55; }
+      .demo-limit strong { color: #596c60; }
+      .footer { display: flex; justify-content: space-between; padding: 28px 0 35px; color: #9aa49f; font-size: 9px; }
+
+      @media (max-width: 900px) {
+        .benefit-grid { grid-template-columns: repeat(2, 1fr); }
+        .benefit-card:last-child { grid-column: 1 / -1; }
+      }
+      @media (max-width: 700px) {
+        .topbar { min-height: 62px; flex-wrap: wrap; gap: 9px; padding: 10px 17px; }
+        .brand { font-size: 9px; }
+        .top-nav { order: 3; width: 100%; justify-content: center; }
+        .top-nav-link { flex: 1; text-align: center; }
+        .topbar-label { font-size: 8px; }
+        .page-content { padding: 0 17px; }
+        .guide-hero { padding: 38px 0 16px; }
+        .guide-hero h1 { font-size: 41px; }
+        .primer { padding-top: 20px; }
+        .primer-heading { align-items: flex-start; flex-direction: column; gap: 9px; }
+        .benefit-grid { grid-template-columns: 1fr; }
+        .benefit-card:last-child { grid-column: auto; }
+        .stack-guide { padding: 17px 14px; }
+        .stack-flow { grid-template-columns: 1fr; gap: 8px; }
+        .stack-item { min-height: 0; }
+        .stack-arrow { transform: rotate(90deg); }
+        .stack-caption { display: none; }
+        .footer { gap: 8px; flex-direction: column; }
+      }
+      @media print {
+        body { background: #fff; }
+        .topbar { padding-right: 0; padding-left: 0; }
+        .page-content { max-width: none; padding: 0; }
+        .guide-hero { padding-top: 30px; }
+        .benefit-card,.stack-guide { break-inside: avoid; box-shadow: none; }
+        .footer { padding-bottom: 0; }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="app-shell">
+      <header class="topbar">
+        <a class="brand" href="#" aria-label="KYC Workflow Lab">
+          <span class="brand-mark" aria-hidden="true">K</span>
+          <span>KYC WORKFLOW LAB</span>
+        </a>
+        <nav class="top-nav" aria-label="Main navigation">
+          <span class="top-nav-link" aria-current="page">Architecture Guide</span>
+        </nav>
+        <span class="topbar-label">ILLUSTRATIVE DESIGN PATTERNS</span>
+      </header>
+
+      <main class="page-content">
+        <section class="guide-hero">
+          <div class="eyebrow"><span class="eyebrow-line"></span>A SHORT GUIDE TO THE ARCHITECTURE</div>
+          <h1>One system doesn’t<br><span>have to do it all.</span></h1>
+          <p>
+            Keep each team’s agent and tools in its own service. Use A2A to request work across
+            boundaries, and return only the information the other team needs.
+          </p>
+        </section>
+
+        <section class="primer" aria-labelledby="primer-title">
+          <div class="primer-heading">
+            <div>
+              <div class="eyebrow">THE IDEAS BEHIND THE DEMO</div>
+              <h2 id="primer-title">Why separate agents can help</h2>
+            </div>
+            <p>These are architectural options and trade-offs, not security guarantees supplied by a protocol.</p>
+          </div>
+
+          <div class="benefit-grid">
+            <article class="benefit-card">
+              <div class="benefit-top">
+                <span class="benefit-number">01</span>
+                <span class="benefit-tag">DATA BOUNDARIES</span>
+              </div>
+              <h3>Keep team data in its own boundary</h3>
+              <p>A shared LangGraph can make shared state and orchestration convenient, but that also means the orchestrator may handle information from multiple steps. Separate agent services create a clearer place to enforce departmental access boundaries.</p>
+              <div class="benefit-example">
+                <span>IN THIS KYC FLOW</span>
+                <p>In this demo, FinCrime returns a risk result rather than sending its raw screening notes to the onboarding workflow.</p>
+              </div>
+              <div class="benefit-caveat">
+                <span>IMPORTANT</span>
+                <p>A2A does not automatically create zero trust or encrypt messages. Service isolation, least-privilege access, authenticated connections, and careful payload design still matter.</p>
+              </div>
+            </article>
+
+            <article class="benefit-card">
+              <div class="benefit-top">
+                <span class="benefit-number">02</span>
+                <span class="benefit-tag">INTEROPERABILITY</span>
+              </div>
+              <h3>Let teams choose their agent stack</h3>
+              <p>LangGraph is useful inside an agent service. A2A gives independently operated agents a common way to describe and exchange work, so departments do not have to share one orchestration graph or framework.</p>
+              <div class="benefit-example">
+                <span>IN THIS KYC FLOW</span>
+                <p>The onboarding team can keep its own workflow while a separate FinCrime service accepts a review task and returns a result.</p>
+              </div>
+              <div class="benefit-caveat">
+                <span>IMPORTANT</span>
+                <p>A standard makes integration easier, not automatic: teams still need compatible capabilities, message formats, versions, and operational agreements.</p>
+              </div>
+            </article>
+
+            <article class="benefit-card">
+              <div class="benefit-top">
+                <span class="benefit-number">03</span>
+                <span class="benefit-tag">IDENTITY &amp; AUDIT</span>
+              </div>
+              <h3>Make handoffs easier to verify</h3>
+              <p>A task ID and a clearly scoped result make it easier to follow who handled a review. Agent descriptions and signed results can add useful evidence when connected to real identity and key-management systems.</p>
+              <div class="benefit-example">
+                <span>IN THIS KYC FLOW</span>
+                <p>The final KYC step asks a separate QA service to verify the FinCrime result before marking its review complete.</p>
+              </div>
+              <div class="benefit-caveat">
+                <span>IMPORTANT</span>
+                <p>A2A does not automatically authenticate every agent or sign every artifact. This demo uses a shared-secret HMAC for illustration; production needs protected keys, trusted identity, authorization, and independent verification.</p>
+              </div>
+            </article>
+          </div>
+
+          <section class="stack-guide" aria-labelledby="stack-title">
+            <div class="stack-guide-heading">
+              <div class="eyebrow">THEY WORK AT DIFFERENT LAYERS</div>
+              <h2 id="stack-title">Use the right tool for each job</h2>
+              <p>You do not have to choose one and discard the others.</p>
+            </div>
+            <div class="stack-flow">
+              <article class="stack-item">
+                <div class="stack-icon stack-brain" aria-hidden="true">LG</div>
+                <div>
+                  <span class="stack-role">THE BRAIN</span>
+                  <h3>LangGraph</h3>
+                  <p>Coordinates reasoning and multi-step work <strong>inside one agent service</strong>.</p>
+                </div>
+              </article>
+              <div class="stack-arrow" aria-hidden="true">+</div>
+              <article class="stack-item">
+                <div class="stack-icon stack-hands" aria-hidden="true">M</div>
+                <div>
+                  <span class="stack-role">THE HANDS</span>
+                  <h3>MCP</h3>
+                  <p>Connects an agent to tools and data it is permitted to use <strong>within its environment</strong>.</p>
+                </div>
+              </article>
+              <div class="stack-arrow" aria-hidden="true">+</div>
+              <article class="stack-item">
+                <div class="stack-icon stack-phone" aria-hidden="true">A</div>
+                <div>
+                  <span class="stack-role">THE HANDOFF</span>
+                  <h3>A2A</h3>
+                  <p>Lets one agent request work from <strong>another agent service</strong> and receive its response.</p>
+                </div>
+              </article>
+            </div>
+            <div class="stack-caption" aria-hidden="true">
+              <span>ONE DEPARTMENT</span>
+              <span>ITS OWN TOOLS &amp; DATA</span>
+              <span>BETWEEN DEPARTMENTS</span>
+            </div>
+            <div class="demo-limit">
+              <strong>Demo scope:</strong> The separate agent roles are illustrated by this local backend; they are not deployed as isolated services. The example signature uses a shared demo secret.
+            </div>
+          </section>
+        </section>
+
+        <footer class="footer">
+          <span>Architecture guide · Illustrative design patterns</span>
+          <span>Controls and trust boundaries matter in either design.</span>
+        </footer>
+      </main>
+    </div>
+  </body>
+</html>
